@@ -1,5 +1,8 @@
 # Task Manager Application
 
+## Technologies
+mongoDB, mongoose, postman, Robo 3T
+
 ## How can you get started
 1. download mongoDB
 2. download Robo 3T
@@ -29,6 +32,7 @@ MongoClient.connect(
   }
 );
 ```
+When you want to develop the project in the next time, you can just open Robo 3T and connect to localhost. Then, you can run node.js to develop your project (no need to run --dbpath again).
 
 ## Creating data
 Add new collection into MongoDB by using insert commands which have 2 kinds of insertion
@@ -174,3 +178,90 @@ db.collection('users')
     console.log(error);
   });
 ```
+
+## Mongoose
+Mongoose is an elegant MongoDB object modeling for node.js which allow us to write MongoDB validation, API and much more. You can install Mongoose by using `npm i mongoose`. Mongoose uses MongoDB module behind the scene. So, everything you learn in MongoDB, can use in Mongoose.
+```javascript
+// mongoose.js
+const mongoose = require('mongoose');
+
+mongoose.connect('mongodb://127.0.0.1:27017/task-manager-api', {
+  useNewUrlParser: true,
+  useCreateIndex: true,
+});
+
+// defines model to define data type
+const User = mongoose.model('User', {
+  name: {
+    type: String,
+  },
+  age: {
+    type: Number,
+  },
+});
+
+// create instance to the database
+const me = new User({
+  name: 'First',
+  age: 20,
+});
+
+me.save()
+  .then(() => {
+    console.log(me);
+  })
+  .catch((error) => {
+    console.log('error', error);
+  });
+```
+
+## Data Validation and Sanitization
+In your node.js file, you can provide validation in the model that you created.
+```javascript
+const User = mongoose.model('User', {
+  name: {
+    type: String,
+    // this is validation - required
+    required: true,
+  },
+  age: {
+    type: Number,
+  },
+});
+```
+You can also create your own validation
+```javascript 
+const User = mongoose.model('User', {
+  name: {
+    type: String,
+    required: true,
+  },
+  age: {
+    type: Number,
+    validate(value) {
+      if (value < 0) {
+        throw new Error('Age must be a positive number');
+      }
+    },
+  },
+});
+```
+
+### validator third-party package for validation
+use `npm install validator` to install validator package which can help you validate the input easily. Then, you can apply validator to mongoose.
+```javascript
+email: {
+    type: String,
+    required: true,
+    validate(value) {
+      if (!validator.isEmail(value)) {
+        throw new Error('Email is Invalid');
+      }
+    },
+  },
+```
+
+### REST API
+Representational State Transfer - Application Programming Interface (REST API or RESTful API) is an API used to connect between client and server which user can send request to create, read, update and delete with the data.
+
+
