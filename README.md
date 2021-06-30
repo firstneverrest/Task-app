@@ -261,7 +261,11 @@ email: {
   },
 ```
 
-### REST API
+## REST API
 Representational State Transfer - Application Programming Interface (REST API or RESTful API) is an API used to connect between client and server which user can send request to create, read, update and delete with the data.
 
+## Testing request with Postman
+Postman is a good tool for testing request and RESTful API that backend has created.
 
+## Status code
+You can learn about status code [here](https://httpstatuses.com/). You can send status code to the user by using `res.status(201).send(user)`. If you not define the specific status code for the response, the user will get 200 OK in every time the request is going well.
