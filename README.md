@@ -269,3 +269,36 @@ Postman is a good tool for testing request and RESTful API that backend has crea
 
 ## Status code
 You can learn about status code [here](https://httpstatuses.com/). You can send status code to the user by using `res.status(201).send(user)`. If you not define the specific status code for the response, the user will get 200 OK in every time the request is going well.
+
+## Read data from database
+Mongoose model provides methods to deal with query.
+1. read all data in the database
+```javascript
+app.get('/users', (req, res) => {
+  // fetch all users in database
+  User.find({})
+    .then((users) => {
+      res.send(users);
+    })
+    .catch((err) => {
+      res.status(500).send()
+    });
+});
+```
+2. read only single data - you have to send the params in the request to specify what data you want.
+```javascript
+app.get('/users/:id', (req, res) => {
+  const _id = req.params.id;
+
+  Task.findById(_id)
+    .then((task) => {
+      if (!task) {
+        return res.status(404).send();
+      }
+      res.send(task);
+    })
+    .catch((err) => {
+      res.status(500).send();
+    });
+});
+```
