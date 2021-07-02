@@ -366,3 +366,31 @@ app.delete('/users/:id', async (req, res) => {
   }
 });
 ```
+### Separate Route Files
+When your project has many routes, your file will be long. So, you can separate the routes in many files to make it's easily to manage.
+1. Register your router that you want to separate
+```javascript
+// index.js
+const userRouter = require('./routers/user');
+...
+// register the router of your separate file
+app.use(userRouter);
+```
+2. create separate file to keep routes
+```javascript
+// user.js
+const express = require('express');
+const User = require('../models/user');
+const router = new express.Router();
+
+router.get('/users', async (req, res) => {
+  try {
+    const users = await User.find({});
+    res.send(users);
+  } catch (err) {
+    res.status(500).send();
+  }
+});
+
+module.exports = router;
+```
