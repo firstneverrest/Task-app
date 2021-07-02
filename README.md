@@ -270,35 +270,99 @@ Postman is a good tool for testing request and RESTful API that backend has crea
 ## Status code
 You can learn about status code [here](https://httpstatuses.com/). You can send status code to the user by using `res.status(201).send(user)`. If you not define the specific status code for the response, the user will get 200 OK in every time the request is going well.
 
-## Read data from database
+## RESTful API for CRUD
+
+### Creating data
+```javascript
+app.post('/users', async (req, res) => {
+  const user = new User(req.body);
+
+  try {
+    await user.save();
+    res.status(201).send(user);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+```
+### Reading data from database
 Mongoose model provides methods to deal with query.
 1. read all data in the database
 ```javascript
-app.get('/users', (req, res) => {
-  // fetch all users in database
-  User.find({})
-    .then((users) => {
-      res.send(users);
-    })
-    .catch((err) => {
-      res.status(500).send()
-    });
+app.get('/users', async (req, res) => {
+  try {
+    const users = User.find({});
+    res.send(users);
+  } catch (err) {
+    res.status(500).send();
+  }
 });
 ```
 2. read only single data - you have to send the params in the request to specify what data you want.
 ```javascript
-app.get('/users/:id', (req, res) => {
+app.get('/users/:id', async (req, res) => {
   const _id = req.params.id;
 
-  Task.findById(_id)
-    .then((task) => {
-      if (!task) {
-        return res.status(404).send();
-      }
-      res.send(task);
-    })
-    .catch((err) => {
-      res.status(500).send();
+  try {
+    const user = await User.findById(_id);
+
+    if (!user) {
+      return res.status(404).send();
+    }
+    res.send(user);
+  } catch (err) {
+    res.status(500).send();
+  }
+});
+```
+
+### Updating data
+You can use patch or put request to update data in the database. No need to use set operator like MongoDB without Mongoose. 
+Tip: What is the difference between patch and put request? - put will replace everything in the old item but patch will replace just data you send in the body, the other data in the old item will not be replaced.
+```javascript
+app.patch('/users/:id', async (req, res) => {
+  const updates = Object.keys(req.body);
+  const allowedUpdates = ['name', 'email', 'password', 'age'];
+  // if one of the items in request.body is not include in
+  // allowedUpdates array, return false
+  const isValidOperation = updates.every((update) =>
+    allowedUpdates.includes(update)
+  );
+
+  if (!isValidOperation) {
+    return res.status(400).send({ error: 'Invalid updates!' });
+  }
+
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
     });
+
+    if (!user) {
+      return res.status(400).send();
+    }
+
+    res.send(user);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+});
+```
+
+### Deleting data
+```javascript
+app.delete('/users/:id', async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+
+    if (!user) {
+      return res.status(404).send();
+    }
+
+    res.send(user);
+  } catch (err) {
+    return res.status(500).send();
+  }
 });
 ```

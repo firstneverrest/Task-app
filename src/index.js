@@ -8,21 +8,15 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
+/* User */
+// read data
 app.get('/users', async (req, res) => {
   try {
-    const users = User.find({});
+    const users = await User.find({});
     res.send(users);
   } catch (err) {
     res.status(500).send();
   }
-  // fetch all users in database
-  // User.find({})
-  //   .then((users) => {
-  //     res.send(users);
-  //   })
-  //   .catch((err) => {
-  //     res.status(500).send();
-  //   });
 });
 
 app.get('/users/:id', async (req, res) => {
@@ -38,19 +32,9 @@ app.get('/users/:id', async (req, res) => {
   } catch (err) {
     res.status(500).send();
   }
-
-  // User.findById(_id)
-  //   .then((user) => {
-  //     if (!user) {
-  //       return res.status(404).send();
-  //     }
-  //     res.send(user);
-  //   })
-  //   .catch((err) => {
-  //     res.status(500).send();
-  //   });
 });
 
+// create data
 app.post('/users', async (req, res) => {
   const user = new User(req.body);
 
@@ -60,17 +44,53 @@ app.post('/users', async (req, res) => {
   } catch (error) {
     res.status(400).send(error);
   }
-
-  // user
-  //   .save()
-  //   .then(() => {
-  //     res.status(201).send(user);
-  //   })
-  //   .catch((err) => {
-  //     res.status(400).send(err);
-  //   });
 });
 
+// update data
+app.patch('/users/:id', async (req, res) => {
+  const updates = Object.keys(req.body);
+  const allowedUpdates = ['name', 'email', 'password', 'age'];
+  // if one of the items in request.body is not include in
+  // allowedUpdates array, return false
+  const isValidOperation = updates.every((update) =>
+    allowedUpdates.includes(update)
+  );
+
+  if (!isValidOperation) {
+    return res.status(400).send({ error: 'Invalid updates!' });
+  }
+
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!user) {
+      return res.status(400).send();
+    }
+
+    res.send(user);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+});
+
+app.delete('/users/:id', async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+
+    if (!user) {
+      return res.status(404).send();
+    }
+
+    res.send(user);
+  } catch (err) {
+    return res.status(500).send();
+  }
+});
+
+/* Task */
 app.get('/tasks', async (req, res) => {
   try {
     const tasks = await Task.find({});
@@ -78,20 +98,13 @@ app.get('/tasks', async (req, res) => {
   } catch (err) {
     res.status(500).send();
   }
-  // Task.find({})
-  //   .then((tasks) => {
-  //     res.send(tasks);
-  //   })
-  //   .catch((err) => {
-  //     res.status(500).send();
-  //   });
 });
 
 app.get('/tasks/:id', async (req, res) => {
   const _id = req.params.id;
 
   try {
-    const tasks = await Task.findById(_id);
+    const task = await Task.findById(_id);
 
     if (!task) {
       return res.status(404).send();
@@ -101,17 +114,6 @@ app.get('/tasks/:id', async (req, res) => {
   } catch (err) {
     res.status(500).send();
   }
-
-  // Task.findById(_id
-  //   .then((task) => {
-  //     if (!task) {
-  //       return res.status(404).send();
-  //     }
-  //     res.send(task);
-  //   })
-  //   .catch((err) => {
-  //     res.status(500).send();
-  //   });
 });
 
 app.post('/tasks', async (req, res) => {
@@ -123,17 +125,49 @@ app.post('/tasks', async (req, res) => {
   } catch (err) {
     res.status(400).send(err);
   }
-
-  // task
-  //   .save()
-  //   .then(() => {
-  //     res.status(201).send(task);
-  //   })
-  //   .catch((err) => {
-  //     res.status(400).send(err);
-  //   });
 });
 
 app.listen(port, () => {
   console.log('Server is up on port ' + port);
+});
+
+app.patch('/tasks/:id', async (req, res) => {
+  const updates = Object.keys(req.body);
+  const allowedUpdates = ['description', 'completed'];
+  const isValidOperation = updates.every((update) =>
+    allowedUpdates.includes(update)
+  );
+
+  if (!isValidOperation) {
+    return res.status(400).send({ error: 'Invalid updates!' });
+  }
+
+  try {
+    const task = await Task.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!task) {
+      return res.status(400).send();
+    }
+
+    res.send(task);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+});
+
+app.delete('/tasks/:id', async (req, res) => {
+  try {
+    const task = await User.findByIdAndDelete(req.params.id);
+
+    if (!task) {
+      return res.status(404).send();
+    }
+
+    res.send(task);
+  } catch (err) {
+    return res.status(500).send();
+  }
 });
