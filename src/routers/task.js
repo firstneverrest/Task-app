@@ -38,10 +38,6 @@ router.post('/tasks', async (req, res) => {
   }
 });
 
-router.listen(port, () => {
-  console.log('Server is up on port ' + port);
-});
-
 router.patch('/tasks/:id', async (req, res) => {
   const updates = Object.keys(req.body);
   const allowedUpdates = ['description', 'completed'];
@@ -54,10 +50,10 @@ router.patch('/tasks/:id', async (req, res) => {
   }
 
   try {
-    const task = await Task.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const task = await Task.findById(req.params.id);
+
+    updates.forEach((update) => (task[update] = req.body[update]));
+    await task.save();
 
     if (!task) {
       return res.status(400).send();

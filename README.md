@@ -394,3 +394,104 @@ router.get('/users', async (req, res) => {
 
 module.exports = router;
 ```
+
+## Securely storing Passwords
+To make storing passwords be secure, you have to encrypt the password. bcryptjs is a third-party library that change plain text to hash. Hashing cannot reverse, it's one way encryption. So, when the user give us the password, this library will compare the hashed password and the input password. If the result is true, you can log in.
+```javascript
+const bcrypt = require('bcryptjs');
+
+const myFunction = async () => {
+  const password = 'Print123';
+  // hash(password, amount of algorithm rounds)
+  const hashedPassword = await bcrypt.hash(password, 8);
+  console.log(hashedPassword); // change every times when hashing
+
+  const isMatch = await bcrypt.compare('Print123', hashedPassword);
+  console.log(isMatch); // true
+};
+
+myFunction();
+```
+
+### Middleware
+Middleware are functions which can run before or after the events occur such as you can run middleware before user is saving which change the plain text to hash.
+```javascript
+// model/user.js
+const userSchema = mongoose.Schema({
+  name: {
+    type: String,
+    trim: true,
+    required: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true,
+    validate(value) {
+      if (!validator.isEmail(value)) {
+        throw new Error('Email is Invalid');
+      }
+    },
+  },
+  age: {
+    type: Number,
+    default: 0,
+    validate(value) {
+      if (value < 0) {
+        throw new Error('Age must be a positive number');
+      }
+    },
+  },
+});
+
+// pre or post
+userSchema.pre('save', async function (next) {
+  const user = this;
+
+  if (user.isModified('password')) {
+    user.password = await bcrypt.hash(user.password, 8);
+  }
+
+  // tell the program to stop run this function
+  next();
+});
+
+const User = mongoose.model('User', userSchema);
+```
+
+## Login users
+1. Create userSchema in model to compare email and password with user's data.
+```javascript
+// model/users.js
+userSchema.statics.findByCredentials = async (email, password) => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new Error('Unable to login');
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    throw new Error('Unable to login');
+  }
+
+  return user;
+};
+```
+2. Create new route for logging in
+```javascript
+// index.js
+router.post('/users/login', async (req, res) => {
+  try {
+    const user = await User.findByCredentials(
+      req.body.email,
+      req.body.password
+    );
+    res.send(user);
+  } catch (error) {
+    res.status(400).send();
+  }
+});
+```
