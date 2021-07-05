@@ -495,3 +495,20 @@ router.post('/users/login', async (req, res) => {
   }
 });
 ```
+## JWT Token
+Set up for authentication like prevent user from using unauthorized routes (delete, create, update). As a server, you can install *jsonwebtoken* package to use JWT.
+```javascript
+const jwt = require('jsonwebtoken');
+
+const myFunction = async () => {
+  // sign({data},secret, options)
+  const token = jwt.sign({ _id: 'abc123' }, 'myProject', {
+    expiresIn: '7 days',
+  });
+  console.log(token);
+
+  // return payload if it's true
+  const data = jwt.verify(token, 'myProject');
+  console.log(data);
+};
+```
