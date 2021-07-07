@@ -505,10 +505,73 @@ const myFunction = async () => {
   const token = jwt.sign({ _id: 'abc123' }, 'myProject', {
     expiresIn: '7 days',
   });
-  console.log(token);
 
   // return payload if it's true
   const data = jwt.verify(token, 'myProject');
   console.log(data);
 };
+```
+```javascript
+userSchema.methods.generateAuthToken = async function () {
+  const user = this;
+  const token = jwt.sign({ _id: user._id.toString() }, 'myProject');
+
+  user.tokens = user.tokens.concat({ token: token });
+  await user.save();
+
+  return token;
+};
+```
+To enable user to login in multiple devices, you have to store jwt in user's document.
+```javascript
+// model/user.js
+tokens: [{
+  token: {
+    type: String,
+    required: true,
+  }
+}]
+```
+
+## Express Middleware
+How to use stored jwt in user document to authorize user request - use middleware to allow verify user before going to route handler.
+
+Without middleware: new request -> run route handler
+
+With middleware: new request -> do something -> run route handler
+
+You can create new middleware folder and export middleware file.
+```javascript
+// auth.js
+const jwt = require('jsonwebtoken');
+const User = require('../models/user');
+
+// user have to provide token via header in the request to authorize
+const auth = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization').replace('Bearer ', '');
+    const decoded = jwt.verify(token, 'myProject');
+    const user = await User.findOne({
+      _id: decoded._id,
+      'tokens.token': token,
+    });
+
+    if (!user) {
+      throw new Error();
+    }
+
+    req.user = user;
+    next();
+  } catch (err) {
+    res.status(401).send({ error: 'Please authenticate' });
+  }
+};
+
+module.exports = auth;
+```
+```javascript
+// routers/user.js add auth in the parameter and get profile
+router.get('/users/me', auth, async (req, res) => {
+  res.send(req.user);
+});
 ```
